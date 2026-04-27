@@ -1,3 +1,5 @@
+const REQUIRED_SCORE = 3;
+
 const questions = [
   {
     question: "¿Cuánto se espera que aumente la inversión en patrocinios de Fórmula 1 entre 2025 y 2026?",
@@ -27,20 +29,7 @@ const questions = [
     options: ["10% y 20%", "43% y 57%", "70% y 80%"],
     answerIndex: 1,
   },
-  {
-    question: "¿A cuánto ascendió el límite presupuestario por escudería en 2026 y cuánto aumentó respecto al tope de 2023?",
-    options: [
-      "USD 100 millones, con un aumento de USD 20 millones",
-      "USD 215 millones, con un aumento de USD 80 millones",
-      "USD 500 millones, con un aumento de USD 200 millones",
-    ],
-    answerIndex: 1,
-  },
 ];
-
-questions.pop();
-
-const REQUIRED_SCORE = 3;
 
 let currentQuestionIndex = 0;
 let score = 0;
@@ -62,6 +51,8 @@ const phoneInput = document.getElementById("phone");
 const questionTitle = document.getElementById("question-title");
 const optionsList = document.getElementById("options");
 const questionContainer = document.getElementById("question-container");
+const answerFeedback = document.getElementById("answer-feedback");
+const resultTitle = document.getElementById("result-title");
 const scoreText = document.getElementById("score-text");
 const rewardText = document.getElementById("reward-text");
 const finishBtn = document.getElementById("finish-btn");
@@ -71,7 +62,6 @@ const countdownText = document.getElementById("countdown-text");
 const lightsWrap = document.getElementById("lights-wrap");
 const progressText = document.getElementById("progress-text");
 const miniScore = document.getElementById("mini-score");
-
 const questionCar = document.getElementById("quiz-car");
 
 function delay(ms) {
@@ -88,8 +78,8 @@ function showScreen(screen) {
 function loadLeaderboard() {
   const data = JSON.parse(localStorage.getItem("f1LeaderBoardV2") || "[]");
   return data.sort((a, b) => {
-    const bTotal = b.total || 5;
-    const aTotal = a.total || 5;
+    const bTotal = b.total || questions.length;
+    const aTotal = a.total || questions.length;
     return b.score / bTotal - a.score / aTotal || b.score - a.score;
   });
 }
@@ -116,9 +106,20 @@ function displayFinalLeaderboard() {
     return;
   }
 
-  board.forEach((entry, index) => {
+  board.forEach((entry) => {
     const li = document.createElement("li");
-    li.textContent = `${index + 1}. ${entry.name} — ${entry.score}/${questions.length}`;
+    const entryName = document.createElement("span");
+    const badge = document.createElement("span");
+    const entryTotal = entry.total || questions.length;
+    const qualified = entry.qualified ?? entry.score >= REQUIRED_SCORE;
+
+    li.className = qualified ? "qualified-entry" : "pending-entry";
+    entryName.textContent = `${entry.name} — ${entry.score}/${entryTotal}`;
+    badge.className = qualified ? "vr-badge" : "retry-badge";
+    badge.textContent = qualified ? "Clasificó VR" : "Reintento";
+
+    li.appendChild(entryName);
+    li.appendChild(badge);
     finalLeaderboard.appendChild(li);
   });
 }
@@ -178,7 +179,22 @@ async function startPreRaceSequence() {
 
 function updateQuizHud() {
   progressText.textContent = `Pregunta ${currentQuestionIndex + 1}/${questions.length}`;
-  miniScore.textContent = `${score}/${REQUIRED_SCORE} para VR`;
+  miniScore.textContent = `${score}/${REQUIRED_SCORE} para simulador VR`;
+  miniScore.classList.toggle("is-qualified", score >= REQUIRED_SCORE);
+}
+
+function getFeedbackText(isCorrect) {
+  if (isCorrect) {
+    return score >= REQUIRED_SCORE
+      ? "Correcta. Ya estás en zona de simulador VR."
+      : "Correcta. Seguís acelerando hacia la clasificación.";
+  }
+
+  const remainingQuestions = questions.length - currentQuestionIndex - 1;
+  const canStillQualify = score + remainingQuestions >= REQUIRED_SCORE;
+  return canStillQualify
+    ? "Todavía podés clasificar. La próxima decisión cuenta."
+    : "Te faltó poco, pero podés volver a intentarlo al final.";
 }
 
 function displayQuestion() {
@@ -186,6 +202,8 @@ function displayQuestion() {
   isAnswerLocked = false;
   questionTitle.textContent = q.question;
   optionsList.innerHTML = "";
+  answerFeedback.textContent = "";
+  answerFeedback.className = "answer-feedback";
   updateQuizHud();
 
   q.options.forEach((option, idx) => {
@@ -205,21 +223,31 @@ function displayQuestion() {
         score += 1;
       }
 
-      document.querySelectorAll(".options-list button").forEach((b) => {
+      document.querySelectorAll(".options-list button").forEach((b, buttonIndex) => {
         b.classList.add("locked");
+        if (buttonIndex === q.answerIndex) {
+          b.classList.add("correct-answer");
+        }
       });
-      btn.classList.add("selected");
-      miniScore.textContent = `${score}/${REQUIRED_SCORE} para VR`;
 
+      btn.classList.add(isCorrect ? "selected" : "wrong-answer");
+      updateQuizHud();
+      answerFeedback.textContent = getFeedbackText(isCorrect);
+      answerFeedback.classList.add(isCorrect ? "is-correct" : "is-wrong");
+
+      await delay(900);
       questionContainer.classList.add("is-exiting");
-      await delay(420);
+      answerFeedback.classList.add("is-exiting");
+      await delay(360);
 
       currentQuestionIndex += 1;
       if (currentQuestionIndex < questions.length) {
         questionContainer.classList.remove("is-exiting");
+        answerFeedback.classList.remove("is-exiting");
         displayQuestion();
       } else {
         questionContainer.classList.remove("is-exiting");
+        answerFeedback.classList.remove("is-exiting");
         showResults();
       }
     });
@@ -237,6 +265,8 @@ function startQuiz() {
   score = 0;
   questionCarGoesDown = true;
   questionContainer.classList.remove("is-exiting");
+  answerFeedback.className = "answer-feedback";
+  answerFeedback.textContent = "";
   displayQuestion();
 }
 
@@ -244,11 +274,12 @@ function showResults() {
   const qualified = score >= REQUIRED_SCORE;
 
   showScreen(resultsScreen);
+  resultTitle.textContent = qualified ? "Clasificaste al simulador VR" : "Te faltó poco";
   scoreText.textContent = `${userData.name}, terminaste con ${score} de ${questions.length} correctas.`;
   rewardText.classList.toggle("qualified", qualified);
   rewardText.textContent = qualified
-    ? "Clasificaste: podés subirte al simulador de Fórmula 1 con realidad virtual."
-    : `Te faltó poco: necesitabas ${REQUIRED_SCORE} correctas para desbloquear el simulador VR.`;
+    ? "Ganaste tu lugar: acercate al equipo para subirte al simulador de Fórmula 1 con realidad virtual."
+    : "No desbloqueaste el simulador esta vez, pero podés volver a correr la trivia y buscar la clasificación.";
   saveToLeaderboard(userData.name, score);
 }
 
