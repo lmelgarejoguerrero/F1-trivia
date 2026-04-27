@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>F1 Trivia – Negocios & Tecnología</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;700;800&family=Rajdhani:wght@500;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="bg-grid"></div>
+  <div id="app">
+    <!-- Registration Screen -->
+    <section id="registration" class="screen">
+      <div class="future-logo-wrap">
+        <img src="img/itba-future-day-logo.png" class="future-logo" alt="ITBA Future Day" />
+      </div>
+      <p class="eyebrow">ITBA x F1 Trivia Sprint</p>
+      <p class="brand-chip">Licenciatura en Negocios y Tecnología</p>
+      <h1>Entrá a la grilla ITBA Future Day</h1>
+      <p class="subtitle">Respondé 4 preguntas: con 3 correctas desbloqueás el simulador de Fórmula 1 en realidad virtual.</p>
+      <form id="registration-form">
+        <div class="field-group">
+          <label for="firstname">Nombre</label>
+          <input type="text" id="firstname" required minlength="2" maxlength="40" pattern="[A-Za-zÁÉÍÓÚÜÑáéíóúüñ' -]{2,40}" title="Ingresá un nombre válido (solo letras y espacios)." />
+        </div>
+        <div class="field-group">
+          <label for="lastname">Apellido</label>
+          <input type="text" id="lastname" required minlength="2" maxlength="40" pattern="[A-Za-zÁÉÍÓÚÜÑáéíóúüñ' -]{2,40}" title="Ingresá un apellido válido (solo letras y espacios)." />
+        </div>
+        <div class="field-group">
+          <label for="email">Correo electrónico</label>
+          <input type="email" id="email" required maxlength="120" title="Ingresá un correo electrónico válido." />
+        </div>
+        <div class="field-group">
+          <label for="phone">Teléfono</label>
+          <input type="tel" id="phone" required minlength="8" maxlength="20" pattern="[0-9+()\-\s]{8,20}" title="Ingresá un teléfono válido (8 a 20 caracteres, solo números y + - ( ))." />
+        </div>
+        <button type="submit" class="primary">Largar carrera</button>
+      </form>
+    </section>
+
+    <!-- Pre-race Screen -->
+    <section id="prerace" class="screen hidden">
+      <div class="lights-wrap hidden" id="lights-wrap">
+        <p class="mini-label">Procedimiento de largada</p>
+        <div class="light-sequence" id="light-sequence">
+          <div class="light"></div>
+          <div class="light"></div>
+          <div class="light"></div>
+          <div class="light"></div>
+          <div class="light"></div>
+        </div>
+      </div>
+      <p id="countdown-text"></p>
+    </section>
+
+    <!-- Quiz Screen -->
+    <section id="quiz" class="screen hidden">
+      <div class="quiz-hud">
+        <span id="progress-text">Pregunta 1/4</span>
+        <span id="mini-score">0 pts</span>
+      </div>
+      <div class="quiz-race-layer" aria-hidden="true">
+        <div class="quiz-car" id="quiz-car"></div>
+      </div>
+      <div class="question-container" id="question-container">
+        <h2 id="question-title"></h2>
+        <ul id="options" class="options-list"></ul>
+      </div>
+      <p class="hint">Objetivo: 3 respuestas correctas para subirte al simulador VR.</p>
+    </section>
+
+    <!-- Results Screen -->
+    <section id="results" class="screen hidden">
+      <h2>Bandera a cuadros</h2>
+      <p id="score-text"></p>
+      <p id="reward-text" class="reward-card"></p>
+      <button id="finish-btn" class="primary">Ver ranking</button>
+    </section>
+
+    <!-- Leaderboard Screen -->
+    <section id="leaderboard" class="screen hidden">
+      <h2>Ranking</h2>
+      <ol id="final-leaderboard"></ol>
+      <button id="restart-btn" class="primary">Nueva carrera</button>
+    </section>
+  </div>
+  <script src="script.js"></script>
+</body>
+</html>
