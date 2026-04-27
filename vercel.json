@@ -1,0 +1,12 @@
+{
+  "rewrites": [
+    {
+      "source": "/",
+      "destination": "/f1_trivia/index.html"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/f1_trivia/$1"
+    }
+  ]
+}
