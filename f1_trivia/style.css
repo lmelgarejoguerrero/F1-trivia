@@ -21,10 +21,20 @@
   padding: 0;
 }
 
+html {
+  min-height: 100%;
+  background:
+    radial-gradient(circle at 14% 18%, rgba(0, 167, 224, 0.26), transparent 35%),
+    radial-gradient(circle at 84% 82%, rgba(118, 181, 239, 0.2), transparent 32%),
+    linear-gradient(170deg, var(--bg-mid), var(--bg-dark));
+}
+
 body {
   font-family: "Rajdhani", sans-serif;
   color: var(--text-main);
   min-height: 100vh;
+  min-height: 100dvh;
+  width: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -33,6 +43,7 @@ body {
     radial-gradient(circle at 14% 18%, rgba(0, 167, 224, 0.26), transparent 35%),
     radial-gradient(circle at 84% 82%, rgba(118, 181, 239, 0.2), transparent 32%),
     linear-gradient(170deg, var(--bg-mid), var(--bg-dark));
+  background-color: var(--bg-dark);
   overflow-x: hidden;
   overflow-y: auto;
 }
@@ -40,16 +51,151 @@ body {
 .bg-grid {
   position: fixed;
   inset: 0;
+  z-index: 0;
   background-image:
     linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
     linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
   background-size: 32px 32px;
   mask-image: radial-gradient(circle, rgba(0, 0, 0, 1), rgba(0, 0, 0, 0.45));
   pointer-events: none;
+  animation: gridDrift 24s linear infinite;
+}
+
+.speed-lines,
+.ambient-glow,
+.background-car {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+}
+
+.speed-lines {
+  z-index: 0;
+  overflow: hidden;
+  opacity: 0.34;
+}
+
+.speed-lines::before,
+.speed-lines::after {
+  content: "";
+  position: absolute;
+  inset: -20% -30%;
+  background:
+    repeating-linear-gradient(
+      115deg,
+      transparent 0 72px,
+      rgba(118, 181, 239, 0.11) 72px 74px,
+      transparent 74px 138px
+    );
+  transform: translateX(-12%);
+  animation: speedSweep 18s linear infinite;
+}
+
+.speed-lines::after {
+  opacity: 0.48;
+  animation-duration: 28s;
+  animation-direction: reverse;
+}
+
+.ambient-glow {
+  z-index: 0;
+  background:
+    radial-gradient(circle at 18% 24%, rgba(0, 167, 224, 0.18), transparent 28%),
+    radial-gradient(circle at 82% 68%, rgba(41, 199, 128, 0.1), transparent 24%);
+  opacity: 0.78;
+  mix-blend-mode: screen;
+  animation: glowBreathe 9s ease-in-out infinite;
+}
+
+.background-car {
+  z-index: 1;
+  overflow: hidden;
+  opacity: 1;
+}
+
+.background-car::before {
+  content: "";
+  position: absolute;
+  top: 52%;
+  left: 0;
+  width: clamp(150px, 18vw, 300px);
+  aspect-ratio: 2 / 3;
+  background: url("img/f1-auto-itba.png") center/contain no-repeat;
+  filter: saturate(1.05) drop-shadow(0 18px 28px rgba(0, 10, 24, 0.48));
+  transform: translate3d(-34vw, -50%, 0) rotate(88deg);
+  animation: backgroundCarPass 34s ease-in-out infinite;
+}
+
+@keyframes gridDrift {
+  from {
+    background-position: 0 0, 0 0;
+  }
+  to {
+    background-position: 32px 48px, 32px 48px;
+  }
+}
+
+@keyframes speedSweep {
+  from {
+    transform: translate3d(-14%, 0, 0);
+  }
+  to {
+    transform: translate3d(14%, 0, 0);
+  }
+}
+
+@keyframes glowBreathe {
+  0%,
+  100% {
+    opacity: 0.56;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.86;
+    transform: scale(1.04);
+  }
+}
+
+@keyframes backgroundCarPass {
+  0% {
+    opacity: 0;
+    transform: translate3d(-34vw, -50%, 0) rotate(88deg);
+  }
+  6% {
+    opacity: 0.5;
+  }
+  28% {
+    opacity: 0.5;
+    transform: translate3d(118vw, -58%, 0) rotate(88deg);
+  }
+  34% {
+    opacity: 0;
+    transform: translate3d(134vw, -58%, 0) rotate(88deg);
+  }
+  45% {
+    opacity: 0;
+    transform: translate3d(134vw, -42%, 0) rotate(268deg);
+  }
+  51% {
+    opacity: 0.5;
+  }
+  75% {
+    opacity: 0.5;
+    transform: translate3d(-34vw, -42%, 0) rotate(268deg);
+  }
+  82% {
+    opacity: 0;
+    transform: translate3d(-42vw, -42%, 0) rotate(268deg);
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(-34vw, -50%, 0) rotate(88deg);
+  }
 }
 
 #app {
   width: min(100%, 640px);
+  max-width: 100%;
   min-height: 0;
   border-radius: 26px;
   border: 1px solid var(--line);
@@ -61,11 +207,13 @@ body {
   box-shadow: 0 20px 70px rgba(0, 10, 24, 0.55);
   overflow: hidden;
   position: relative;
+  z-index: 2;
   isolation: isolate;
 }
 
 #app::after {
   content: "";
+  display: none;
   position: absolute;
   right: -120px;
   bottom: -120px;
@@ -234,6 +382,16 @@ h2 {
   width: clamp(112px, 9vw, 178px);
   opacity: 0.92;
   pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bg-grid,
+  .speed-lines::before,
+  .speed-lines::after,
+  .ambient-glow,
+  .background-car::before {
+    animation: none;
+  }
 }
 
 .site-brand img {
@@ -682,7 +840,7 @@ input:focus {
 
 @media (max-width: 760px) {
   body {
-    padding: 4.2rem 0.8rem 0.8rem;
+    padding: 4.2rem 1rem 1rem;
   }
 
   .site-brand {
@@ -693,7 +851,8 @@ input:focus {
 
   #app {
     height: auto;
-    width: min(100%, 640px);
+    width: calc(100vw - 2.2rem);
+    max-width: calc(100vw - 2.2rem);
   }
 
   .screen {
@@ -786,27 +945,199 @@ input:focus {
   }
 
   #app {
-    width: min(72vw, 760px);
+    width: min(68vw, 900px);
   }
 
   .screen {
-    padding: clamp(1.2rem, 2.1vh, 1.7rem) clamp(1.8rem, 3vw, 2.7rem);
+    padding: clamp(1.4rem, 2.3vh, 2rem) clamp(2rem, 3vw, 3rem);
   }
 
   h1 {
-    font-size: clamp(2.15rem, 3.2vw, 3.25rem);
+    font-size: clamp(2.45rem, 3.4vw, 3.85rem);
     max-width: 17ch;
   }
 
   .subtitle {
-    font-size: 1.06rem;
+    font-size: clamp(1.06rem, 1.15vw, 1.28rem);
     max-width: 48ch;
+  }
+
+  .eyebrow {
+    font-size: clamp(1.05rem, 1.1vw, 1.28rem);
+  }
+
+  .brand-chip {
+    font-size: clamp(0.95rem, 1vw, 1.12rem);
+  }
+
+  .race-perks span {
+    min-height: 2rem;
+    font-size: clamp(0.9rem, 0.9vw, 1.05rem);
+    padding-inline: 0.75rem;
   }
 
   input,
   .primary,
   .options-list button {
-    min-height: 3.45rem;
+    min-height: clamp(3.45rem, 5.4vh, 4.4rem);
+    font-size: clamp(1rem, 0.95vw, 1.18rem);
+  }
+
+  label {
+    font-size: clamp(1rem, 0.95vw, 1.16rem);
+  }
+
+  .future-logo-wrap {
+    width: clamp(78px, 6vw, 108px);
+    height: clamp(112px, 8.6vw, 154px);
+  }
+
+  .background-car::before {
+    top: 50%;
+    width: clamp(190px, 16vw, 320px);
+    animation-duration: 36s;
+  }
+}
+
+@media (min-width: 2200px) and (min-height: 1200px) and (orientation: landscape) {
+  .site-brand {
+    width: clamp(160px, 7vw, 240px);
+  }
+
+  #app {
+    width: min(58vw, 1080px);
+  }
+
+  .screen {
+    padding: clamp(1.8rem, 2.4vh, 2.6rem) clamp(2.4rem, 3.2vw, 3.6rem);
+  }
+
+  .screen:not(.hidden),
+  #registration {
+    gap: clamp(0.82rem, 1.25vh, 1.1rem);
+  }
+
+  h1 {
+    font-size: clamp(3.2rem, 3.1vw, 4.6rem);
+    max-width: 16.5ch;
+  }
+
+  .subtitle {
+    font-size: clamp(1.22rem, 1vw, 1.5rem);
+  }
+
+  .eyebrow {
+    font-size: clamp(1.25rem, 0.95vw, 1.45rem);
+  }
+
+  .brand-chip,
+  label {
+    font-size: clamp(1.08rem, 0.85vw, 1.3rem);
+  }
+
+  .race-perks span {
+    min-height: 2.25rem;
+    font-size: clamp(1rem, 0.75vw, 1.18rem);
+  }
+
+  input,
+  .primary,
+  .options-list button {
+    min-height: clamp(4.2rem, 4.4vh, 5.25rem);
+    font-size: clamp(1.14rem, 0.8vw, 1.35rem);
+  }
+
+  .future-logo-wrap {
+    width: clamp(104px, 4.4vw, 150px);
+    height: clamp(150px, 6.4vw, 216px);
+  }
+}
+
+@media (min-width: 900px) and (orientation: landscape) and (max-height: 850px) {
+  body {
+    padding: 0.7rem 1rem;
+  }
+
+  .site-brand {
+    width: clamp(92px, 8vw, 132px);
+    top: 1rem;
+    left: 1.2rem;
+  }
+
+  #app {
+    width: min(72vw, 760px);
+    max-height: calc(100dvh - 1.4rem);
+  }
+
+  .screen {
+    padding: clamp(0.9rem, 1.7vh, 1.15rem) clamp(1.35rem, 2.5vw, 2rem);
+  }
+
+  .screen:not(.hidden),
+  #registration {
+    gap: 0.5rem;
+  }
+
+  #registration {
+    padding-top: 0.85rem;
+    padding-bottom: 0.85rem;
+  }
+
+  .eyebrow {
+    font-size: 0.96rem;
+  }
+
+  .brand-chip {
+    font-size: 0.84rem;
+  }
+
+  h1 {
+    font-size: clamp(1.75rem, 3.3vw, 2.55rem);
+    max-width: 17ch;
+  }
+
+  .subtitle {
+    font-size: 0.88rem;
+    max-width: 46ch;
+  }
+
+  .race-perks {
+    gap: 0.35rem;
+  }
+
+  .race-perks span {
+    min-height: 1.46rem;
+    padding: 0.18rem 0.55rem;
+    font-size: 0.78rem;
+  }
+
+  .future-logo-wrap {
+    width: 56px;
+    height: 80px;
+    top: 0.95rem;
+    right: 1.35rem;
+  }
+
+  #registration-form {
+    gap: 0.42rem;
+  }
+
+  label {
+    margin-bottom: 0.12rem;
+    font-size: 0.86rem;
+  }
+
+  input {
+    min-height: 2.6rem;
+    padding: 0.48rem 0.68rem;
+    font-size: 0.92rem;
+  }
+
+  #registration-form .primary {
+    min-height: 2.85rem;
+    margin-top: 0.06rem;
+    padding: 0.58rem;
+    font-size: 1rem;
   }
 }
 
@@ -848,5 +1179,107 @@ input:focus {
 
   label {
     font-size: 1.08rem;
+  }
+
+  .background-car {
+    opacity: 1;
+  }
+
+  .background-car::before {
+    top: 82%;
+    left: 0;
+    width: clamp(170px, 26vw, 300px);
+    animation-name: backgroundCarPassPortrait;
+  }
+}
+
+@media (min-width: 1400px) and (orientation: portrait) {
+  body {
+    padding-top: clamp(7rem, 7vh, 10rem);
+  }
+
+  .site-brand {
+    width: clamp(190px, 15vw, 280px);
+  }
+
+  #app {
+    width: min(86vw, 1080px);
+  }
+
+  .screen {
+    padding: clamp(2.2rem, 3.4vw, 4rem);
+  }
+
+  h1 {
+    font-size: clamp(4rem, 6vw, 6rem);
+    max-width: 14ch;
+  }
+
+  .subtitle {
+    font-size: clamp(1.35rem, 1.9vw, 1.8rem);
+  }
+
+  .eyebrow {
+    font-size: clamp(1.35rem, 1.45vw, 1.8rem);
+  }
+
+  .brand-chip,
+  label {
+    font-size: clamp(1.25rem, 1.25vw, 1.6rem);
+  }
+
+  .race-perks span {
+    min-height: 2.55rem;
+    font-size: clamp(1.1rem, 1vw, 1.35rem);
+    padding-inline: 0.9rem;
+  }
+
+  input,
+  .primary,
+  .options-list button {
+    min-height: clamp(4.8rem, 4vh, 5.8rem);
+    font-size: clamp(1.3rem, 1.1vw, 1.6rem);
+  }
+
+  .future-logo-wrap {
+    width: clamp(110px, 8vw, 170px);
+    height: clamp(158px, 11.8vw, 244px);
+  }
+}
+
+@keyframes backgroundCarPassPortrait {
+  0% {
+    opacity: 0;
+    transform: translate3d(-44vw, -50%, 0) rotate(88deg);
+  }
+  7% {
+    opacity: 0.34;
+  }
+  30% {
+    opacity: 0.34;
+    transform: translate3d(124vw, -58%, 0) rotate(88deg);
+  }
+  38% {
+    opacity: 0;
+    transform: translate3d(144vw, -58%, 0) rotate(88deg);
+  }
+  48% {
+    opacity: 0;
+    transform: translate3d(144vw, -42%, 0) rotate(268deg);
+  }
+  55% {
+    opacity: 0.34;
+  }
+  78% {
+    opacity: 0.34;
+    transform: translate3d(-44vw, -42%, 0) rotate(268deg);
+  }
+  86% {
+    opacity: 0;
+    transform: translate3d(-56vw, -42%, 0) rotate(268deg);
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(-44vw, -50%, 0) rotate(88deg);
   }
 }
