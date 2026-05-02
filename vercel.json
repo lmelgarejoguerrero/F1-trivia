@@ -5,8 +5,16 @@
       "destination": "/f1_trivia/index.html"
     },
     {
-      "source": "/(.*)",
-      "destination": "/f1_trivia/$1"
+      "source": "/style.css",
+      "destination": "/f1_trivia/style.css"
+    },
+    {
+      "source": "/script.js",
+      "destination": "/f1_trivia/script.js"
+    },
+    {
+      "source": "/img/(.*)",
+      "destination": "/f1_trivia/img/$1"
     }
   ]
 }

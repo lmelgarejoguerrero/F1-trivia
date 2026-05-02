@@ -1,6 +1,5 @@
 const REQUIRED_SCORE = 3;
-const SPREADSHEET_WEB_APP_URL =
-  "https://script.google.com/macros/s/AKfycbzKOk8hCNgnOyaVA2EpTvopdhKrbc5u_F8iKi2b7M7EVg6CsGPck8JzSW5MQKnvpq7R/exec";
+const SPREADSHEET_API_URL = "/api/register";
 const SPREADSHEET_QUEUE_KEY = "f1SpreadsheetQueueV1";
 
 const questions = [
@@ -91,58 +90,28 @@ function enqueueSpreadsheetPayload(payload) {
   saveSpreadsheetQueue(queue);
 }
 
-function buildSpreadsheetRequestUrl(payload) {
-  const url = new URL(SPREADSHEET_WEB_APP_URL);
-
-  Object.entries(payload).forEach(([key, value]) => {
-    url.searchParams.set(key, value);
-  });
-
-  url.searchParams.set("_ts", Date.now().toString());
-  return url.toString();
-}
-
-function sendSpreadsheetPixel(payload) {
-  return new Promise((resolve) => {
-    const pixel = new Image();
-    let settled = false;
-
-    const finish = () => {
-      if (settled) {
-        return;
-      }
-
-      settled = true;
-      clearTimeout(timeoutId);
-      resolve(true);
-    };
-
-    const timeoutId = window.setTimeout(finish, 1600);
-
-    pixel.onload = finish;
-    pixel.onerror = finish;
-    pixel.src = buildSpreadsheetRequestUrl(payload);
-  });
-}
-
 async function postToSpreadsheet(payload) {
-  if (!SPREADSHEET_WEB_APP_URL) {
+  if (!SPREADSHEET_API_URL) {
     return false;
   }
 
   try {
-    if (navigator.sendBeacon) {
-      const accepted = navigator.sendBeacon(
-        SPREADSHEET_WEB_APP_URL,
-        JSON.stringify(payload)
-      );
+    const response = await fetch(SPREADSHEET_API_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      cache: "no-store",
+      keepalive: true,
+      body: JSON.stringify(payload),
+    });
 
-      if (accepted) {
-        return true;
-      }
+    if (!response.ok) {
+      return false;
     }
 
-    return await sendSpreadsheetPixel(payload);
+    const data = await response.json();
+    return Boolean(data.ok);
   } catch (error) {
     console.warn("No se pudo enviar el registro al spreadsheet.", error);
     return false;
@@ -150,7 +119,7 @@ async function postToSpreadsheet(payload) {
 }
 
 async function flushSpreadsheetQueue() {
-  if (isSpreadsheetSyncInFlight || !SPREADSHEET_WEB_APP_URL) {
+  if (isSpreadsheetSyncInFlight || !SPREADSHEET_API_URL) {
     return;
   }
 
