@@ -1,4 +1,7 @@
 const REQUIRED_SCORE = 3;
+const SPREADSHEET_WEB_APP_URL =
+  "https://script.google.com/macros/s/AKfycbyLKvZpSb_iK9XtrQi3pvFsieDFtuqGuN0iF0W3Z8HvMyCgaZrhaNIBXxG7zBUon5zw/exec";
+const SPREADSHEET_QUEUE_KEY = "f1SpreadsheetQueueV1";
 
 const questions = [
   {
@@ -36,6 +39,7 @@ let score = 0;
 let userData = {};
 let isAnswerLocked = false;
 let questionCarGoesDown = true;
+let isSpreadsheetSyncInFlight = false;
 
 const registrationScreen = document.getElementById("registration");
 const preRaceScreen = document.getElementById("prerace");
@@ -66,6 +70,89 @@ const questionCar = document.getElementById("quiz-car");
 
 function delay(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function loadSpreadsheetQueue() {
+  try {
+    return JSON.parse(localStorage.getItem(SPREADSHEET_QUEUE_KEY) || "[]");
+  } catch (error) {
+    console.warn("No se pudo leer la cola local de spreadsheet.", error);
+    return [];
+  }
+}
+
+function saveSpreadsheetQueue(queue) {
+  localStorage.setItem(SPREADSHEET_QUEUE_KEY, JSON.stringify(queue));
+}
+
+function enqueueSpreadsheetPayload(payload) {
+  const queue = loadSpreadsheetQueue();
+  queue.push(payload);
+  saveSpreadsheetQueue(queue);
+}
+
+async function postToSpreadsheet(payload) {
+  if (!SPREADSHEET_WEB_APP_URL) {
+    return false;
+  }
+
+  try {
+    await fetch(SPREADSHEET_WEB_APP_URL, {
+      method: "POST",
+      mode: "no-cors",
+      headers: {
+        "Content-Type": "text/plain;charset=utf-8",
+      },
+      body: JSON.stringify(payload),
+    });
+
+    return true;
+  } catch (error) {
+    console.warn("No se pudo enviar el registro al spreadsheet.", error);
+    return false;
+  }
+}
+
+async function flushSpreadsheetQueue() {
+  if (isSpreadsheetSyncInFlight || !SPREADSHEET_WEB_APP_URL) {
+    return;
+  }
+
+  const queue = loadSpreadsheetQueue();
+  if (!queue.length) {
+    return;
+  }
+
+  isSpreadsheetSyncInFlight = true;
+
+  try {
+    const pending = [];
+
+    for (const payload of queue) {
+      const sent = await postToSpreadsheet(payload);
+      if (!sent) {
+        pending.push(payload);
+      }
+    }
+
+    saveSpreadsheetQueue(pending);
+  } finally {
+    isSpreadsheetSyncInFlight = false;
+  }
+}
+
+function buildSpreadsheetPayload(firstName, lastName, email, phone) {
+  return {
+    firstName,
+    lastName,
+    email,
+    phone,
+  };
+}
+
+function queueParticipantForSpreadsheet(payload) {
+  enqueueSpreadsheetPayload(payload);
+  void flushSpreadsheetQueue();
 }
 
 function showScreen(screen) {
@@ -359,10 +446,14 @@ registrationForm.addEventListener("submit", async (e) => {
   }
 
   userData = {
+    firstName: fname,
+    lastName: lname,
     name: `${fname} ${lname}`,
     email,
     phone,
   };
+
+  queueParticipantForSpreadsheet(buildSpreadsheetPayload(fname, lname, email, phone));
 
   showScreen(preRaceScreen);
   await startPreRaceSequence();
@@ -377,3 +468,9 @@ restartBtn.addEventListener("click", () => {
   registrationForm.reset();
   showScreen(registrationScreen);
 });
+
+window.addEventListener("online", () => {
+  void flushSpreadsheetQueue();
+});
+
+void flushSpreadsheetQueue();

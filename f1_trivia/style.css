@@ -196,6 +196,7 @@ body {
 #app {
   width: min(100%, 640px);
   max-width: 100%;
+  max-height: calc(100dvh - 2rem);
   min-height: 0;
   border-radius: 26px;
   border: 1px solid var(--line);
@@ -229,11 +230,15 @@ body {
 .screen {
   display: none;
   min-height: 0;
-  padding: clamp(1.15rem, 2.2vw, 1.7rem) clamp(1.45rem, 3vw, 2.35rem);
+  padding:
+    clamp(1.15rem, 2.2vw, 1.7rem)
+    clamp(1.45rem, 3vw, 2.35rem)
+    max(clamp(1.15rem, 2.2vw, 1.7rem), calc(1rem + env(safe-area-inset-bottom)));
   animation: screenIn 360ms ease;
   position: relative;
   z-index: 1;
   overflow-y: auto;
+  scrollbar-gutter: stable both-edges;
 }
 
 .screen:not(.hidden) {
@@ -264,8 +269,16 @@ body {
   padding-right: 6.2rem;
 }
 
+.brand-stack {
+  display: grid;
+  gap: 0.32rem;
+  justify-items: start;
+  width: min(100%, calc(100% - 6rem));
+}
+
 .brand-chip {
   width: fit-content;
+  max-width: 100%;
   margin-inline: 0;
   padding: 0.1rem 0 0.12rem 0.72rem;
   border-left: 3px solid var(--itba-cyan);
@@ -274,7 +287,7 @@ body {
   font-size: 0.92rem;
   letter-spacing: 0.2px;
   line-height: 1.1;
-  padding-right: 6rem;
+  padding-right: 0.3rem;
 }
 
 h1,
@@ -417,7 +430,7 @@ h2 {
   margin-inline: 0;
   display: grid;
   grid-template-columns: 1fr;
-  gap: 0.62rem;
+  gap: 0.68rem;
 }
 
 .field-group {
@@ -440,7 +453,8 @@ input {
   background: rgba(0, 40, 76, 0.44);
   color: var(--text-main);
   font-size: 0.98rem;
-  padding: 0.7rem 0.78rem;
+  min-height: 3rem;
+  padding: 0.74rem 0.82rem;
 }
 
 #registration-form .primary {
@@ -885,7 +899,10 @@ input:focus {
 
   .brand-chip {
     font-size: 0.86rem;
-    padding-right: 4.8rem;
+  }
+
+  .brand-stack {
+    width: min(100%, calc(100% - 4.8rem));
   }
 
   h1 {
@@ -968,6 +985,10 @@ input:focus {
 
   .brand-chip {
     font-size: clamp(0.95rem, 1vw, 1.12rem);
+  }
+
+  .brand-stack {
+    width: min(100%, calc(100% - 6.8rem));
   }
 
   .race-perks span {
@@ -1055,7 +1076,8 @@ input:focus {
 
 @media (min-width: 900px) and (orientation: landscape) and (max-height: 850px) {
   body {
-    padding: 0.7rem 1rem;
+    align-items: center;
+    padding: 0.55rem 0.9rem;
   }
 
   .site-brand {
@@ -1066,11 +1088,14 @@ input:focus {
 
   #app {
     width: min(72vw, 760px);
-    max-height: calc(100dvh - 1.4rem);
+    max-height: calc(100dvh - 2rem);
   }
 
   .screen {
-    padding: clamp(0.9rem, 1.7vh, 1.15rem) clamp(1.35rem, 2.5vw, 2rem);
+    padding:
+      clamp(0.85rem, 1.6vh, 1.1rem)
+      clamp(1.2rem, 2.2vw, 1.9rem)
+      max(clamp(0.95rem, 1.8vh, 1.15rem), calc(0.9rem + env(safe-area-inset-bottom)));
   }
 
   .screen:not(.hidden),
@@ -1089,6 +1114,11 @@ input:focus {
 
   .brand-chip {
     font-size: 0.84rem;
+  }
+
+  .brand-stack {
+    gap: 0.22rem;
+    width: min(100%, calc(100% - 4.3rem));
   }
 
   h1 {
@@ -1119,7 +1149,7 @@ input:focus {
   }
 
   #registration-form {
-    gap: 0.42rem;
+    gap: 0.38rem;
   }
 
   label {
@@ -1138,12 +1168,15 @@ input:focus {
     margin-top: 0.06rem;
     padding: 0.58rem;
     font-size: 1rem;
+    position: sticky;
+    bottom: 0;
+    z-index: 2;
   }
 }
 
 @media (min-width: 760px) and (orientation: portrait) {
   body {
-    align-items: flex-start;
+    align-items: center;
     padding: clamp(5.2rem, 8vh, 7rem) clamp(1.2rem, 4vw, 2.4rem) clamp(1.2rem, 3vh, 2rem);
   }
 
@@ -1155,10 +1188,15 @@ input:focus {
 
   #app {
     width: min(92vw, 720px);
+    max-height: calc(100dvh - clamp(7rem, 11vh, 9rem));
   }
 
   .screen {
     padding: clamp(1.5rem, 3vw, 2.4rem);
+  }
+
+  .brand-stack {
+    width: min(100%, calc(100% - 7rem));
   }
 
   h1 {
@@ -1204,6 +1242,7 @@ input:focus {
 
   #app {
     width: min(86vw, 1080px);
+    max-height: calc(100dvh - clamp(9rem, 11vh, 13rem));
   }
 
   .screen {
