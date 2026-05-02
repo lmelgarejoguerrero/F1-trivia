@@ -102,20 +102,47 @@ function buildSpreadsheetRequestUrl(payload) {
   return url.toString();
 }
 
+function sendSpreadsheetPixel(payload) {
+  return new Promise((resolve) => {
+    const pixel = new Image();
+    let settled = false;
+
+    const finish = () => {
+      if (settled) {
+        return;
+      }
+
+      settled = true;
+      clearTimeout(timeoutId);
+      resolve(true);
+    };
+
+    const timeoutId = window.setTimeout(finish, 1600);
+
+    pixel.onload = finish;
+    pixel.onerror = finish;
+    pixel.src = buildSpreadsheetRequestUrl(payload);
+  });
+}
+
 async function postToSpreadsheet(payload) {
   if (!SPREADSHEET_WEB_APP_URL) {
     return false;
   }
 
   try {
-    await fetch(buildSpreadsheetRequestUrl(payload), {
-      method: "GET",
-      mode: "no-cors",
-      cache: "no-store",
-      keepalive: true,
-    });
+    if (navigator.sendBeacon) {
+      const accepted = navigator.sendBeacon(
+        SPREADSHEET_WEB_APP_URL,
+        JSON.stringify(payload)
+      );
 
-    return true;
+      if (accepted) {
+        return true;
+      }
+    }
+
+    return await sendSpreadsheetPixel(payload);
   } catch (error) {
     console.warn("No se pudo enviar el registro al spreadsheet.", error);
     return false;
