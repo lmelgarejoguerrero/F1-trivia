@@ -1,6 +1,6 @@
 const REQUIRED_SCORE = 3;
 const SPREADSHEET_WEB_APP_URL =
-  "https://script.google.com/macros/s/AKfycbymo6g1Seit01SzyTKu_7vUyijRjntuiC0B51ExEttzCEuAyNSUhaTdxipp0gTiBu-fug/exec";
+  "https://script.google.com/macros/s/AKfycbzKOk8hCNgnOyaVA2EpTvopdhKrbc5u_F8iKi2b7M7EVg6CsGPck8JzSW5MQKnvpq7R/exec";
 const SPREADSHEET_QUEUE_KEY = "f1SpreadsheetQueueV1";
 
 const questions = [
