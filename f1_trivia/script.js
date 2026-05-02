@@ -91,19 +91,28 @@ function enqueueSpreadsheetPayload(payload) {
   saveSpreadsheetQueue(queue);
 }
 
+function buildSpreadsheetRequestUrl(payload) {
+  const url = new URL(SPREADSHEET_WEB_APP_URL);
+
+  Object.entries(payload).forEach(([key, value]) => {
+    url.searchParams.set(key, value);
+  });
+
+  url.searchParams.set("_ts", Date.now().toString());
+  return url.toString();
+}
+
 async function postToSpreadsheet(payload) {
   if (!SPREADSHEET_WEB_APP_URL) {
     return false;
   }
 
   try {
-    await fetch(SPREADSHEET_WEB_APP_URL, {
-      method: "POST",
+    await fetch(buildSpreadsheetRequestUrl(payload), {
+      method: "GET",
       mode: "no-cors",
-      headers: {
-        "Content-Type": "text/plain;charset=utf-8",
-      },
-      body: JSON.stringify(payload),
+      cache: "no-store",
+      keepalive: true,
     });
 
     return true;

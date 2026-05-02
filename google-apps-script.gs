@@ -8,27 +8,20 @@ const HEADERS = [
 ];
 
 function doGet() {
+  const params = arguments[0]?.parameter || {};
+
+  if (hasLeadData_(params)) {
+    return saveLead_(params);
+  }
+
   return ContentService
     .createTextOutput(JSON.stringify({ ok: true, sheet: SHEET_NAME, fields: HEADERS }))
     .setMimeType(ContentService.MimeType.JSON);
 }
 
 function doPost(e) {
-  const sheet = getOrCreateSheet_();
   const payload = JSON.parse(e.postData.contents || "{}");
-  const nextId = getNextId_(sheet);
-
-  sheet.appendRow([
-    nextId,
-    payload.firstName || "",
-    payload.lastName || "",
-    payload.email || "",
-    payload.phone || "",
-  ]);
-
-  return ContentService
-    .createTextOutput(JSON.stringify({ ok: true, id: nextId }))
-    .setMimeType(ContentService.MimeType.JSON);
+  return saveLead_(payload);
 }
 
 function getOrCreateSheet_() {
@@ -56,4 +49,25 @@ function getNextId_(sheet) {
   }, 0);
 
   return maxId + 1;
+}
+
+function hasLeadData_(payload) {
+  return Boolean(payload.firstName || payload.lastName || payload.email || payload.phone);
+}
+
+function saveLead_(payload) {
+  const sheet = getOrCreateSheet_();
+  const nextId = getNextId_(sheet);
+
+  sheet.appendRow([
+    nextId,
+    payload.firstName || "",
+    payload.lastName || "",
+    payload.email || "",
+    payload.phone || "",
+  ]);
+
+  return ContentService
+    .createTextOutput(JSON.stringify({ ok: true, id: nextId }))
+    .setMimeType(ContentService.MimeType.JSON);
 }
