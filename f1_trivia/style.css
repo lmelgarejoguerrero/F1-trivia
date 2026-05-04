@@ -270,9 +270,10 @@ body {
 }
 
 .brand-stack {
-  display: grid;
-  gap: 0.32rem;
-  justify-items: start;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.42rem 0.8rem;
   width: min(100%, calc(100% - 6rem));
 }
 
