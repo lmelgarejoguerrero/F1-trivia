@@ -912,8 +912,8 @@ input:focus {
   }
 
   h1 {
-    font-size: clamp(1.62rem, 7vw, 2.2rem);
-    max-width: 11ch;
+    font-size: clamp(1.34rem, 5.4vw, 1.9rem);
+    max-width: none;
     white-space: normal;
     line-height: 0.98;
   }
@@ -921,7 +921,7 @@ input:focus {
   .subtitle {
     font-size: 0.88rem;
     white-space: normal;
-    max-width: 27ch;
+    max-width: none;
     line-height: 1.14;
   }
 
