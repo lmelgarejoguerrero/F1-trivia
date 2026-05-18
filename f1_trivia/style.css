@@ -506,6 +506,12 @@ input:focus {
   padding-left: 0;
   display: grid;
   gap: 0.45rem;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-right: 0.2rem;
+  scrollbar-gutter: stable;
 }
 
 #final-leaderboard li {
@@ -823,6 +829,21 @@ input:focus {
 #results,
 #leaderboard {
   justify-content: center;
+}
+
+#leaderboard {
+  justify-content: flex-start;
+  max-height: inherit;
+  overflow: hidden;
+}
+
+#leaderboard h2,
+#leaderboard .primary {
+  flex: 0 0 auto;
+}
+
+#leaderboard .primary {
+  margin-top: 0.12rem;
 }
 
 #score-text {
