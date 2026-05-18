@@ -1,37 +1,10 @@
 const REQUIRED_SCORE = 3;
+const QUESTIONS_PER_RUN = 4;
+const MAX_HARD_QUESTIONS_PER_RUN = 1;
+const PREFERRED_DIFFICULTY_MIX = ["facil", "media", "media", "dificil"];
 const SPREADSHEET_API_URL = "/api/register";
 const SPREADSHEET_QUEUE_KEY = "f1SpreadsheetQueueV1";
-
-const questions = [
-  {
-    question: "¿Cuánto se espera que aumente la inversión en patrocinios de Fórmula 1 entre 2025 y 2026?",
-    options: [
-      "De USD 1,0 a USD 1,5 mil millones",
-      "De USD 2,5 a más de USD 3 mil millones",
-      "De USD 5 a USD 7 mil millones",
-    ],
-    answerIndex: 1,
-  },
-  {
-    question: "Un coche de F1 moderno tiene cerca de 300 sensores. ¿Cuántos puntos de datos genera por segundo?",
-    options: [
-      "10.000 puntos de datos por segundo",
-      "100.000 puntos de datos por segundo",
-      "Más de 1 millón de puntos de datos por segundo",
-    ],
-    answerIndex: 2,
-  },
-  {
-    question: "¿Cuál es el rango de precio de un paquete de hospitality F1 Paddock Club de tres días en 2026?",
-    options: ["USD 500 a 1.000", "USD 5.500 a 15.399", "USD 30.000 a 50.000"],
-    answerIndex: 1,
-  },
-  {
-    question: "En 2025, ¿qué porcentaje de la base total de fans de F1 tenía menos de 35 años y qué porcentaje de los nuevos fans pertenecía a este grupo?",
-    options: ["10% y 20%", "43% y 57%", "70% y 80%"],
-    answerIndex: 1,
-  },
-];
+const questionBank = Array.isArray(window.QUESTION_BANK) ? window.QUESTION_BANK : [];
 
 let currentQuestionIndex = 0;
 let score = 0;
@@ -39,6 +12,7 @@ let userData = {};
 let isAnswerLocked = false;
 let questionCarGoesDown = true;
 let isSpreadsheetSyncInFlight = false;
+let activeQuestions = [];
 
 const registrationScreen = document.getElementById("registration");
 const preRaceScreen = document.getElementById("prerace");
@@ -69,6 +43,104 @@ const questionCar = document.getElementById("quiz-car");
 
 function delay(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function shuffleArray(items) {
+  const shuffled = [...items];
+
+  for (let i = shuffled.length - 1; i > 0; i -= 1) {
+    const randomIndex = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[randomIndex]] = [shuffled[randomIndex], shuffled[i]];
+  }
+
+  return shuffled;
+}
+
+function normalizeDifficulty(value) {
+  return String(value || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim();
+}
+
+function getDifficultyTier(question) {
+  const difficulty = normalizeDifficulty(question?.difficulty);
+
+  if (["dificil", "hard", "alta", "avanzada"].includes(difficulty)) {
+    return "dificil";
+  }
+
+  if (["facil", "easy", "baja", "introductoria"].includes(difficulty)) {
+    return "facil";
+  }
+
+  return "media";
+}
+
+function selectQuestionsForRun() {
+  const groups = {
+    facil: [],
+    media: [],
+    dificil: [],
+  };
+
+  shuffleArray(questionBank).forEach((question) => {
+    groups[getDifficultyTier(question)].push(question);
+  });
+
+  const selected = [];
+  const usedQuestions = new Set();
+  const usedQuestionTexts = new Set();
+
+  function hardCount() {
+    return selected.filter((question) => getDifficultyTier(question) === "dificil").length;
+  }
+
+  function takeFrom(pool, amount, allowExtraHard = false) {
+    for (const question of pool) {
+      if (selected.length >= QUESTIONS_PER_RUN || amount <= 0) {
+        return;
+      }
+
+      const questionText = String(question.question || "").trim().toLowerCase();
+      if (usedQuestions.has(question) || usedQuestionTexts.has(questionText)) {
+        continue;
+      }
+
+      const isHard = getDifficultyTier(question) === "dificil";
+      if (isHard && !allowExtraHard && hardCount() >= MAX_HARD_QUESTIONS_PER_RUN) {
+        continue;
+      }
+
+      selected.push(question);
+      usedQuestions.add(question);
+      usedQuestionTexts.add(questionText);
+      amount -= 1;
+    }
+  }
+
+  PREFERRED_DIFFICULTY_MIX.forEach((difficulty) => {
+    takeFrom(groups[difficulty], 1);
+  });
+
+  takeFrom(shuffleArray([...groups.facil, ...groups.media]), QUESTIONS_PER_RUN - selected.length);
+  takeFrom(groups.dificil, QUESTIONS_PER_RUN - selected.length);
+  takeFrom(shuffleArray(questionBank), QUESTIONS_PER_RUN - selected.length, true);
+
+  return selected.slice(0, QUESTIONS_PER_RUN);
+}
+
+function prepareQuizQuestions() {
+  return selectQuestionsForRun()
+    .map((question) => ({
+      ...question,
+      options: shuffleArray(question.options || []).map((option) => ({ ...option })),
+    }));
+}
+
+function getQuizTotal() {
+  return activeQuestions.length || Math.min(questionBank.length, QUESTIONS_PER_RUN) || QUESTIONS_PER_RUN;
 }
 
 function loadSpreadsheetQueue() {
@@ -170,8 +242,8 @@ function showScreen(screen) {
 function loadLeaderboard() {
   const data = JSON.parse(localStorage.getItem("f1LeaderBoardV2") || "[]");
   return data.sort((a, b) => {
-    const bTotal = b.total || questions.length;
-    const aTotal = a.total || questions.length;
+    const bTotal = b.total || QUESTIONS_PER_RUN;
+    const aTotal = a.total || QUESTIONS_PER_RUN;
     return b.score / bTotal - a.score / aTotal || b.score - a.score;
   });
 }
@@ -181,7 +253,7 @@ function saveToLeaderboard(name, totalScore) {
   board.push({
     name,
     score: totalScore,
-    total: questions.length,
+    total: getQuizTotal(),
     qualified: totalScore >= REQUIRED_SCORE,
   });
   localStorage.setItem("f1LeaderBoardV2", JSON.stringify(board));
@@ -202,13 +274,13 @@ function displayFinalLeaderboard() {
     const li = document.createElement("li");
     const entryName = document.createElement("span");
     const badge = document.createElement("span");
-    const entryTotal = entry.total || questions.length;
+    const entryTotal = entry.total || QUESTIONS_PER_RUN;
     const qualified = entry.qualified ?? entry.score >= REQUIRED_SCORE;
 
     li.className = qualified ? "qualified-entry" : "pending-entry";
     entryName.textContent = `${entry.name} — ${entry.score}/${entryTotal}`;
     badge.className = qualified ? "vr-badge" : "retry-badge";
-    badge.textContent = qualified ? "Clasificó VR" : "Reintento";
+    badge.textContent = qualified ? "Clasificó VR" : "No clasificó";
 
     li.appendChild(entryName);
     li.appendChild(badge);
@@ -270,7 +342,7 @@ async function startPreRaceSequence() {
 }
 
 function updateQuizHud() {
-  progressText.textContent = `Pregunta ${currentQuestionIndex + 1}/${questions.length}`;
+  progressText.textContent = `Pregunta ${currentQuestionIndex + 1}/${getQuizTotal()}`;
   miniScore.textContent = `${score}/${REQUIRED_SCORE} para simulador VR`;
   miniScore.classList.toggle("is-qualified", score >= REQUIRED_SCORE);
 }
@@ -282,15 +354,20 @@ function getFeedbackText(isCorrect) {
       : "Correcta. Seguís acelerando hacia la clasificación.";
   }
 
-  const remainingQuestions = questions.length - currentQuestionIndex - 1;
+  const remainingQuestions = getQuizTotal() - currentQuestionIndex - 1;
   const canStillQualify = score + remainingQuestions >= REQUIRED_SCORE;
   return canStillQualify
     ? "Todavía podés clasificar. La próxima decisión cuenta."
-    : "Te faltó poco, pero podés volver a intentarlo al final.";
+    : "Quedás fuera de zona de simulador. Terminá la carrera y seguí conociendo el Future Day.";
 }
 
 function displayQuestion() {
-  const q = questions[currentQuestionIndex];
+  const q = activeQuestions[currentQuestionIndex];
+  if (!q) {
+    showResults();
+    return;
+  }
+
   isAnswerLocked = false;
   questionTitle.textContent = q.question;
   optionsList.innerHTML = "";
@@ -298,11 +375,11 @@ function displayQuestion() {
   answerFeedback.className = "answer-feedback";
   updateQuizHud();
 
-  q.options.forEach((option, idx) => {
+  q.options.forEach((option) => {
     const li = document.createElement("li");
     const btn = document.createElement("button");
     btn.type = "button";
-    btn.textContent = option;
+    btn.textContent = option.text;
 
     btn.addEventListener("click", async () => {
       if (isAnswerLocked) {
@@ -310,14 +387,14 @@ function displayQuestion() {
       }
 
       isAnswerLocked = true;
-      const isCorrect = idx === q.answerIndex;
+      const isCorrect = option.isCorrect;
       if (isCorrect) {
         score += 1;
       }
 
       document.querySelectorAll(".options-list button").forEach((b, buttonIndex) => {
         b.classList.add("locked");
-        if (buttonIndex === q.answerIndex) {
+        if (q.options[buttonIndex]?.isCorrect) {
           b.classList.add("correct-answer");
         }
       });
@@ -333,7 +410,7 @@ function displayQuestion() {
       await delay(360);
 
       currentQuestionIndex += 1;
-      if (currentQuestionIndex < questions.length) {
+      if (currentQuestionIndex < activeQuestions.length) {
         questionContainer.classList.remove("is-exiting");
         answerFeedback.classList.remove("is-exiting");
         displayQuestion();
@@ -353,6 +430,7 @@ function displayQuestion() {
 }
 
 function startQuiz() {
+  activeQuestions = prepareQuizQuestions();
   currentQuestionIndex = 0;
   score = 0;
   questionCarGoesDown = true;
@@ -364,14 +442,15 @@ function startQuiz() {
 
 function showResults() {
   const qualified = score >= REQUIRED_SCORE;
+  const totalQuestions = getQuizTotal();
 
   showScreen(resultsScreen);
-  resultTitle.textContent = qualified ? "Clasificaste al simulador VR" : "Te faltó poco";
-  scoreText.textContent = `${userData.name}, terminaste con ${score} de ${questions.length} correctas.`;
+  resultTitle.textContent = qualified ? "Clasificaste al simulador VR" : "No clasificaste al simulador";
+  scoreText.textContent = `${userData.name}, terminaste con ${score} de ${totalQuestions} correctas.`;
   rewardText.classList.toggle("qualified", qualified);
   rewardText.textContent = qualified
     ? "Ganaste tu lugar: acercate al equipo para subirte al simulador de Fórmula 1 con realidad virtual."
-    : "No desbloqueaste el simulador esta vez, pero podés volver a correr la trivia y buscar la clasificación.";
+    : "Gracias por participar. Acercate al equipo del stand para conocer más sobre las carreras y las actividades del Future Day.";
   saveToLeaderboard(userData.name, score);
 }
 

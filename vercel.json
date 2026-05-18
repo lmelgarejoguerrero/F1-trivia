@@ -13,6 +13,10 @@
       "destination": "/f1_trivia/script.js"
     },
     {
+      "source": "/questions-bank.js",
+      "destination": "/f1_trivia/questions-bank.js"
+    },
+    {
       "source": "/img/(.*)",
       "destination": "/f1_trivia/img/$1"
     }
