@@ -512,6 +512,27 @@ input:focus {
   overscroll-behavior: contain;
   padding-right: 0.2rem;
   scrollbar-gutter: stable;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(244, 248, 255, 0.48) rgba(244, 248, 255, 0.08);
+}
+
+#final-leaderboard::-webkit-scrollbar {
+  width: 9px;
+}
+
+#final-leaderboard::-webkit-scrollbar-track {
+  border-radius: 999px;
+  background: rgba(244, 248, 255, 0.08);
+}
+
+#final-leaderboard::-webkit-scrollbar-thumb {
+  border: 2px solid rgba(3, 24, 48, 0.72);
+  border-radius: 999px;
+  background: linear-gradient(180deg, rgba(244, 248, 255, 0.64), rgba(118, 181, 239, 0.48));
+}
+
+#final-leaderboard::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.78), rgba(118, 181, 239, 0.62));
 }
 
 #final-leaderboard li {
