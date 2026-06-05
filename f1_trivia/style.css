@@ -1028,14 +1028,15 @@ input:focus {
 
   h1 {
     font-size: clamp(2.45rem, 3.4vw, 3.85rem);
-    max-width: none;
-    white-space: nowrap;
+    max-width: calc(100% - clamp(6.4rem, 8vw, 9.2rem));
+    white-space: normal;
+    text-wrap: balance;
   }
 
   .subtitle {
     font-size: clamp(1.06rem, 1.15vw, 1.28rem);
-    max-width: none;
-    white-space: nowrap;
+    max-width: calc(100% - clamp(6.4rem, 8vw, 9.2rem));
+    white-space: normal;
   }
 
   .eyebrow {
@@ -1099,13 +1100,15 @@ input:focus {
 
   h1 {
     font-size: clamp(3.2rem, 3.1vw, 4.6rem);
-    max-width: none;
-    white-space: nowrap;
+    max-width: calc(100% - clamp(8.5rem, 9vw, 12rem));
+    white-space: normal;
+    text-wrap: balance;
   }
 
   .subtitle {
     font-size: clamp(1.22rem, 1vw, 1.5rem);
-    white-space: nowrap;
+    max-width: calc(100% - clamp(8.5rem, 9vw, 12rem));
+    white-space: normal;
   }
 
   .eyebrow {
@@ -1148,7 +1151,7 @@ input:focus {
   }
 
   #app {
-    width: min(72vw, 760px);
+    width: min(70vw, 780px);
     max-height: calc(100dvh - 2rem);
   }
 
@@ -1183,15 +1186,16 @@ input:focus {
   }
 
   h1 {
-    font-size: clamp(1.75rem, 3.3vw, 2.55rem);
-    max-width: none;
-    white-space: nowrap;
+    font-size: clamp(1.65rem, 2.75vw, 2.22rem);
+    max-width: calc(100% - 4.9rem);
+    white-space: normal;
+    text-wrap: balance;
   }
 
   .subtitle {
     font-size: 0.88rem;
-    max-width: none;
-    white-space: nowrap;
+    max-width: calc(100% - 4.9rem);
+    white-space: normal;
   }
 
   .race-perks {
@@ -1205,8 +1209,8 @@ input:focus {
   }
 
   .future-logo-wrap {
-    width: 56px;
-    height: 80px;
+    width: 50px;
+    height: 72px;
     top: 0.95rem;
     right: 1.35rem;
   }
